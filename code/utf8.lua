@@ -1,4 +1,8 @@
 --[[
+    UTF-8字符处理
+]]
+
+--[[
     -- 返回utf8长度,中英文长度可以统一
 ]]
 local utf8len = function(input)
