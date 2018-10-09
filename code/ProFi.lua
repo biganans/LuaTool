@@ -1,6 +1,6 @@
 --[[
 	ProFi v1.3, by Luke Perkin 2012. MIT Licence http://www.opensource.org/licenses/mit-license.php.
-	
+
 	Example:
 		ProFi = require 'ProFi'
 		ProFi:start()
@@ -54,6 +54,10 @@ local FORMAT_BANNER 		   = [[
 
 ]]
 
+--filter path dir,common set:your lua module dir.
+--需要过滤filter的路径，防止路径过长导致显示不出后面的文件名，一般为项目的lua模块文件夹
+local FILTERDIR = "module"
+
 -----------------------
 -- Public Methods:
 -----------------------
@@ -61,7 +65,7 @@ local FORMAT_BANNER 		   = [[
 --[[
 	Starts profiling any method that is called between this and ProFi:stop().
 	Pass the parameter 'once' to so that this methodis only run once.
-	Example: 
+	Example:
 		ProFi:start( 'once' )
 ]]
 function ProFi:start( param )
@@ -83,7 +87,7 @@ end
 	Stops profiling.
 ]]
 function ProFi:stop()
-	if self:shouldReturn() then 
+	if self:shouldReturn() then
 		return
 	end
 	self.stopTime = getTime()
@@ -111,12 +115,13 @@ end
 --[[
 	Writes the profile report to a file.
 	Param: [filename:string:optional] defaults to 'ProFi.txt' if not specified.
+	[fitlerName:string:optional] defaults to 'nil' if not specified. 过滤参数，比如只监控某个文件夹下的lua使用
 ]]
-function ProFi:writeReport( filename )
+function ProFi:writeReport( filename,fitlerName )
 	if #self.reports > 0 or #self.memoryReports > 0 then
 		filename = filename or 'ProFi.txt'
 		self:sortReportsWithSortMethod( self.reports, self.sortMethod )
-		self:writeReportsToFilename( filename )
+		self:writeReportsToFilename( filename ,fitlerName )
 		print( string.format("[ProFi]\t Report written to %s", filename) )
 	end
 end
@@ -239,17 +244,31 @@ function ProFi:stopHooks()
 	debug.sethook()
 end
 
+function ProFi:filterReports(fitlerName)
+	for i=#self.reports,1,-1 do
+		local _,p = string.find(self.reports[i].title,fitlerName)
+		if p == nil or p == 0 then
+			table.remove(self.reports,i)
+		else
+			JJLog.i("filterReports",self.reports[i].title)
+		end
+	end
+end
+
 function ProFi:sortReportsWithSortMethod( reports, sortMethod )
 	if reports then
 		table.sort( reports, sortMethod )
 	end
 end
 
-function ProFi:writeReportsToFilename( filename )
+function ProFi:writeReportsToFilename( filename ,fitlerName)
 	local file, err = io.open( filename, 'w' )
 	assert( file, err )
 	self:writeBannerToFile( file )
 	if #self.reports > 0 then
+		if fitlerName then
+			self:filterReports(fitlerName)
+		end
 		self:writeProfilingReportsToFile( self.reports, file )
 	end
 	if #self.memoryReports > 0 then
@@ -433,6 +452,10 @@ getTime = os.clock
 
 onDebugHook = function( hookType )
 	local funcInfo = debug.getinfo( 2, 'nS' )
+	local s,p = string.find(funcInfo.short_src,FILTERDIR)
+	if s and p and p > 0 then
+		funcInfo.short_src = string.sub(funcInfo.short_src,p+2)
+	end
 	if hookType == "call" then
 		ProFi:onFunctionCall( funcInfo )
 	elseif hookType == "return" then
@@ -454,3 +477,15 @@ end
 
 ProFi:reset()
 return ProFi
+
+--[[
+use：
+使用方法：
+在ctor或init构造初始化中
+ProFi:start()
+ProFi:checkMemory(0,"ctor")
+在exit或者destory销毁函数中
+ProFi:checkMemory(0,"onDestory")
+ProFi:stop()
+ProFi:writeReport( 'MyProfilingReport.txt',"game" )
+]]
