@@ -5,3 +5,4 @@
 ## file.lua [文件处理](https://github.com/biganans/LuaTool/blob/master/code/file.lua)    
 ## table.lua [table表的操作](https://github.com/biganans/LuaTool/blob/master/code/table.lua)
 ## string.lua [字符操作](https://github.com/biganans/LuaTool/blob/master/code/string.lua)   
+## ProFi.lua [lua内存打印，排除内存泄漏和优化内存](https://github.com/biganans/LuaTool/blob/master/code/ProFi.lua)   
