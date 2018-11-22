@@ -7,3 +7,17 @@
 ## string.lua [字符操作](https://github.com/biganans/LuaTool/blob/master/code/string.lua)   
 ## ProFi.lua [lua内存打印，排除内存泄漏和优化内存](https://github.com/biganans/LuaTool/blob/master/code/ProFi.lua)   
 ## ELO.lua [ELO匹配算法](https://github.com/biganans/LuaTool/blob/master/code/ELO.lua)  
+# 很神奇的发现    
+1.table.sort    invalid order function for sorting
+当sort里面导致排序不是稳定的时候怎么办，怎么搞都不对的时候，试试下面的骚操作：
+```
+local _sortTask = function(t1,t2)
+  if t1 == nil or t1 == nil then
+        return false
+    end
+    local bcomp = function(t1,t2)
+    --随便你怎么骚写判定条件
+    end
+    return bcomp(t1,t2)
+end
+```    
